@@ -16,7 +16,8 @@ class RLWE:
     
     @staticmethod
     def errorPoly(n:int) -> Polynomial:
-        e: np.ndarray = rand(n).round(0).astype(int)
+        e: np.ndarray = rand(n)
+        e = e.round(0).astype(int)
         return Polynomial(e)
     
     def mod(self, poly:Polynomial) -> Polynomial:
@@ -45,7 +46,8 @@ class RLWE:
 
     def keyGen(self):
         A = self.randomPoly(self.n, self.q)
-        self._S = self.randomPoly(self.n, self.q)
+        self._S = self.errorPoly(self.n)
+        print("sk:", self._S)
         e = self.errorPoly(self.n)
         T = A * self._S + e
         T = self.mod(T)
@@ -75,14 +77,18 @@ class RLWE:
 
 if __name__ == "__main__":
     n=7
-    q=13
+    q=43
     m1 = np.array([1,0,0,1,0,0,0])
     seed(0)
     PLWE_test = RLWE(n,q)
     pk = PLWE_test.keyGen()
     cipher = PLWE_test.enc(pk, m1)
+    U, C = cipher
     m2 = PLWE_test.dec(cipher)
     print("m1:", m1)
+    print("--cipher--")
+    print("U", U)
+    print("C", C)
     print("m2:", m2)
     # PLWE_test.polyToMatrix(A)
     # PLWE_test.polyToMatrix(T)
