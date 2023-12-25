@@ -43,52 +43,67 @@ class RLWE:
             A = np.vstack([A, poly.coef.astype(int)])
         print(A)
 
-
+    def getSK(self):
+        return self._S
+    
     def keyGen(self):
+        # discrete random ring polynominal
         A = self.randomPoly(self.n, self.q)
+        # error distribution
         self._S = self.errorPoly(self.n)
-        print("sk:", self._S)
+        # error distribution
         e = self.errorPoly(self.n)
-        T = A * self._S + e
-        T = self.mod(T)
+
+        T = A * self._S
+        T = self.mod(T) + e
         return (A, T)
 
     def enc(self, pk:(Polynomial,Polynomial), m:list):
         M = Polynomial(m) * (self.q//2)
         A, T = pk
-        r = self.randomPoly(self.n, self.q)
+        r = self.errorPoly(self.n)
         e1 = self.errorPoly(self.n)
         e2 = self.errorPoly(self.n)
+
         U = A * r + e1
         U = self.mod(U)
+
         C = T * r + e2 + M
         C = self.mod(C)
         return (U, C)
 
-    def dec(self, cipher:(Polynomial,Polynomial)):
+    def dec(self, cipher:(Polynomial,Polynomial)) -> np.ndarray:
         """
             ** how to rounding decoding message ???
         """
         U, C = cipher
-        M = C - U * self._S
+        M = C - (U * self._S)
+        # M.coef = M.coef % self.q
         M = self.mod(M)
-        m = M.coef//(self.q//2)
-        return m.astype(int)
+        m = []
+        for i in M.coef:
+            if i < self.q*3//4 and i > self.q//4:
+                m.append(1)
+            else:
+                m.append(0)
+        return np.array(m).astype(int)
 
 if __name__ == "__main__":
     n=7
     q=43
-    m1 = np.array([1,0,0,1,0,0,0])
-    seed(0)
+    m1 = np.array([1,0,0,1,0,1,0])
+    seed(1)
     PLWE_test = RLWE(n,q)
-    pk = PLWE_test.keyGen()
-    cipher = PLWE_test.enc(pk, m1)
+    A, T = PLWE_test.keyGen()
+    S = PLWE_test.getSK()
+    cipher = PLWE_test.enc((A,T), m1)
     U, C = cipher
     m2 = PLWE_test.dec(cipher)
     print("m1:", m1)
     print("--cipher--")
     print("U", U)
     print("C", C)
+    print("M", PLWE_test.mod(C-U*S))
     print("m2:", m2)
     # PLWE_test.polyToMatrix(A)
     # PLWE_test.polyToMatrix(T)
