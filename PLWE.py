@@ -110,16 +110,34 @@ if __name__ == "__main__":
     q=3329
     std = 1
     seed(7)
-    m1 = randint(0,2,n)
+    alice_bits = randint(0,2,n)
     PLWE_test = PLWE(m,n,q,std)
     pk = PLWE_test.keyGen()
-    cipher = PLWE_test.enc(pk, m1)
-    
-    m2 = PLWE_test.dec(cipher)
-    # print("m1:", m1)
-    # print("m2:", m2)
-    if all(e1 == e2 for e1,e2 in zip(m1,m2)):
-      print("m1 = m2")
+    cipher = PLWE_test.enc(pk, alice_bits)
+    U, C = cipher
 
-    errorrate = np.mean( m1 != m2 )
+    bob_bits = PLWE_test.dec(cipher)
+    eve_bits = np.where(((C[0][0].coef>q//4)&(C[0][0].coef<q*3//4)),1,0)
+    print("alice_bits:", alice_bits)
+    print("bob_bits:", bob_bits)
+    print("eve_bits:", eve_bits)
+
+    if all(e1 == e2 for e1,e2 in zip(alice_bits,bob_bits)):
+        print("alice_bits = bob_bits")
+    else:
+        print("alice_bits != bob_bits")
+
+    errorrate = np.mean( alice_bits != bob_bits )
+    print("BER = ", errorrate)
+
+        # m = np.round(M.coef/(self.q/2), 0)
+    if len(eve_bits) < n:
+        eve_bits = np.append(eve_bits, [0 for i in range(n - len(eve_bits))])
+
+    if all(e1 == e2 for e1,e2 in zip(alice_bits,eve_bits)):
+        print("alice_bits = eve_bits")
+    else :
+        print("alice_bits != eve_bits")
+
+    errorrate = np.mean( alice_bits != eve_bits )
     print("BER = ", errorrate)
