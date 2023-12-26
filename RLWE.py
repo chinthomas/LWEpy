@@ -89,21 +89,27 @@ class RLWE:
         return np.array(m).astype(int)
 
 if __name__ == "__main__":
-    n=7
-    q=43
-    m1 = np.array([1,0,0,1,0,1,0])
-    seed(1)
+    n=256
+    q=3329
+    m1 = randint(0,2,n)
+    seed(0)
     PLWE_test = RLWE(n,q)
     A, T = PLWE_test.keyGen()
-    S = PLWE_test.getSK()
+    # S = PLWE_test.getSK()
     cipher = PLWE_test.enc((A,T), m1)
     U, C = cipher
     m2 = PLWE_test.dec(cipher)
-    print("m1:", m1)
-    print("--cipher--")
-    print("U", U)
-    print("C", C)
-    print("M", PLWE_test.mod(C-U*S))
-    print("m2:", m2)
+    for i in range(n):
+        if(m1[i] != m2[i]):
+            print(False)
+            break
+        if i+1==n :
+            print(True)
+    
+    # print("m1:", m1)
+    # print("--cipher--")
+    # print("U", U)
+    # print("C", C)
+    # print("m2:", m2)
     # PLWE_test.polyToMatrix(A)
     # PLWE_test.polyToMatrix(T)
