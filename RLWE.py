@@ -5,6 +5,7 @@ class RLWE:
     def __init__(self, n, q) -> None:
         self.n = n
         self.q = q
+        self._S = Polynomial(np.zeros(n))
         self.f = Polynomial.basis(n) + 1
     
     @staticmethod
@@ -91,25 +92,30 @@ class RLWE:
 if __name__ == "__main__":
     n=256
     q=3329
-    m1 = randint(0,2,n)
+    msg_bits = randint(0,2,n)
     seed(0)
     PLWE_test = RLWE(n,q)
     A, T = PLWE_test.keyGen()
     # S = PLWE_test.getSK()
-    cipher = PLWE_test.enc((A,T), m1)
+    cipher = PLWE_test.enc((A,T), msg_bits)
     U, C = cipher
-    m2 = PLWE_test.dec(cipher)
+    dec_bits = PLWE_test.dec(cipher)
     for i in range(n):
-        if(m1[i] != m2[i]):
+        if(msg_bits[i] != dec_bits[i]):
             print(False)
             break
         if i+1==n :
             print(True)
-    
-    # print("m1:", m1)
+    # eve
+    eve_machine = RLWE(n,q)
+    eve_bits = eve_machine.dec(cipher)
     # print("--cipher--")
-    # print("U", U)
     # print("C", C)
-    # print("m2:", m2)
+    # print("U", U)
+    print("---result---")
+    # print("msg_bits:", msg_bits)
+    # print("dec_bits:", dec_bits)
     # PLWE_test.polyToMatrix(A)
     # PLWE_test.polyToMatrix(T)
+    print("Decode BER",np.mean(msg_bits != dec_bits))
+    print("eve BER", np.mean(msg_bits != eve_bits))
