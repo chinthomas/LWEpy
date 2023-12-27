@@ -1,6 +1,5 @@
 from Crypto.Cipher import DES
 from PLWE import PLWE
-from numpy.polynomial import Polynomial
 from numpy.random import*
 import numpy as np
 
@@ -18,41 +17,57 @@ def createKey(m):
     return key
 
 if __name__ == "__main__":
-    m=4
-    n=64
+    # seed(318)
+    m=4     # number of polynomial in matrix
+    n=64    # share key length
     q=1289
     std = 2
-    seed(318)
+    ml = 1024   # message length
 
-    ml = 1024
-    
-    # encode
-    key = randint(0,2,n).astype(int)
+    # 1. exchange the share key via public key encryption system
+    # ----- Alice -----
+    # Alice generate a share key
+    alice_key = randint(0,2,n).astype(int)
+
+    # use private key system to transform the share key
     PLWE_test = PLWE(m,n,q,std)
     pk = PLWE_test.keyGen()
-    cipher = PLWE_test.enc(pk, key)
-    U, C = cipher
-    key = createKey(key)
-    print("key in bytes:", key)
+    cipher = PLWE_test.enc(pk, alice_key)
+
+    # DES package need 8 bytes key
+    alice_share_key = createKey(alice_key)
+    print("alice's share key in bytes:", alice_share_key)
+
+    # ----- Bob -----
+    bob_key = PLWE_test.dec(cipher)
+    bob_share_key = createKey(bob_key)
+    print("Bob's share key in bytes:", bob_share_key)
+    
+
+    # 2. with share key they can transform message 
+    # ----- Alice -----
+    des = DES.new(alice_share_key, DES.MODE_ECB)
+
+    # encode message
     message = randint(0,2,ml)
+    # message = input("the message to transform: ")
     message = ''.join(map(str,message)).encode('utf-8')
-    des = DES.new(key, DES.MODE_ECB)
     cipher_text = des.encrypt(message)
+    
+    # ----- Bob -----
+    des2 = DES.new(bob_share_key, DES.MODE_ECB)
 
-    # decode
-
-    key2 = PLWE_test.dec(cipher)
-    key2 = createKey(key2)
-    print("key2 in bytes:", key)
-
-    des2 = DES.new(key2, DES.MODE_ECB)
+    # decode message
     cipher_text2 = cipher_text.hex()
     message2 = des2.decrypt(cipher_text)
 
-    print("message to send: ", message)
-    print("message receieved: ", message2)
+
+    # 3. result
+    print("-----result-----")
+    print("message to send: ", message.decode('utf-8'))
+    print("message receieved: ", message2.decode('utf-8'))
     errorrate = np.mean( message != message2 )
     print("BER = ", errorrate)
 
     m_c_rate = len(cipher_text2)/len(message)
-    print("message＿cypher rate:　",m_c_rate)
+    print("message-cypher rate: ",m_c_rate)

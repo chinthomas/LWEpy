@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.random import *
-import sys
 
 class LWE:
     def __init__(self, n, q) -> None:
@@ -35,14 +34,13 @@ class LWE:
         T = np.matmul(A, S) + e
         return A, T%self.q, S
 
-
     def enc(self, A:np.ndarray, T:np.ndarray, m:np.ndarray):
         r = self.RandArray(self.n, 1, self.q)
         e1 = self.errorArray(self.n)
         e2 = self.errorArray(1)
         U = np.matmul(A.transpose(), r) + e1
         U = U  % self.q
-        C = np.matmul(T.transpose(), r) + e2 + m*(self.q//2)
+        C = np.matmul(T.transpose(), r) + e2 + m*np.round(self.q/2)
         C = C % self.q
         return U, C
 
@@ -55,6 +53,8 @@ if __name__ == "__main__":
     # seed(5)
     q = 13
     n = 7
+    n = int(input("n to be :"))
+    q = int(input("q to be :"))
     msg_len = int(input("message bits length :"))
     msg_bit = randint(0,2,msg_len) # random bit
     # a encryption machine to carry out the implemetation
@@ -88,16 +88,14 @@ if __name__ == "__main__":
     print(f'U=\n{U}')
     print(f'C=\n{C}')
 
-
-    print("-----eve:-----")
     # eve_bits = [0 if (C_list[i]%q) < 3*q//4 and (C_list[i]%q) > q//4 else 1 for i in range(len(C_list))]
     print("-----result:-----")
     print("message bit:", msg_bit)
     print("eve_bits:", np.array(eve_bits))
     print("decoding bit:", msg_dec.astype(int))
-    if all(e1 == e2 for e1,e2 in zip(msg_bit, msg_dec)) :
-        print("\nmsg_bit == msg_dec")
-    else : 
-        print ("\nWrong!!! msg_bit != msg_dec ")
+    # if all(e1 == e2 for e1,e2 in zip(msg_bit, msg_dec)) :
+    #     print("\nmsg_bit == msg_dec")
+    # else : 
+    #     print ("\nWrong!!! msg_bit != msg_dec ")
     print("Decode BER",np.mean(msg_bit != msg_dec))
     print("eve BER", np.mean(msg_bit != eve_bits))

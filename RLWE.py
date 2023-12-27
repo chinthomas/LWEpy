@@ -41,8 +41,9 @@ class RLWE:
         for i in range(self.n):
             poly = poly*x
             poly = self.mod(poly)
-            A = np.vstack([A, poly.coef.astype(int)])
-        print(A)
+            print(poly.coef)
+            # A = np.vstack([A, poly.coef.astype(int)])
+        # print(A)
 
     def getSK(self):
         return self._S
@@ -60,7 +61,7 @@ class RLWE:
         return (A, T)
 
     def enc(self, pk:(Polynomial,Polynomial), m:list):
-        M = Polynomial(m) * (self.q//2)
+        M = Polynomial(m) * np.round(self.q/2)
         A, T = pk
         r = self.errorPoly(self.n)
         e1 = self.errorPoly(self.n)
@@ -83,15 +84,15 @@ class RLWE:
         M = self.mod(M)
         m = []
         for i in M.coef:
-            if i < self.q*3//4 and i > self.q//4:
+            if i < np.round(self.q*3/4) and i > np.round(self.q/4):
                 m.append(1)
             else:
                 m.append(0)
         return np.array(m).astype(int)
 
 if __name__ == "__main__":
-    n=256
-    q=3329
+    n=7
+    q=17
     msg_bits = randint(0,2,n)
     seed(0)
     PLWE_test = RLWE(n,q)
@@ -100,22 +101,19 @@ if __name__ == "__main__":
     cipher = PLWE_test.enc((A,T), msg_bits)
     U, C = cipher
     dec_bits = PLWE_test.dec(cipher)
-    for i in range(n):
-        if(msg_bits[i] != dec_bits[i]):
-            print(False)
-            break
-        if i+1==n :
-            print(True)
     # eve
     eve_machine = RLWE(n,q)
     eve_bits = eve_machine.dec(cipher)
-    # print("--cipher--")
-    # print("C", C)
-    # print("U", U)
+    print("--cipher--")
+    print("C", C)
+    print("U", U)
+    print("polynomial ring represents a matrix")
+    PLWE_test.polyToMatrix(A)
+    print("")
     print("---result---")
-    # print("msg_bits:", msg_bits)
-    # print("dec_bits:", dec_bits)
-    # PLWE_test.polyToMatrix(A)
+    print("msg_bits:", msg_bits)
+    print("eve_bits:", np.array(eve_bits))
+    print("dec_bits:", dec_bits)
     # PLWE_test.polyToMatrix(T)
     print("Decode BER",np.mean(msg_bits != dec_bits))
     print("eve BER", np.mean(msg_bits != eve_bits))
