@@ -1,5 +1,5 @@
 from Crypto.Cipher import DES
-from PLWE import PLWE
+from MLWE import MLWE
 from numpy.random import*
 import numpy as np
 
@@ -30,16 +30,16 @@ if __name__ == "__main__":
     alice_key = randint(0,2,n).astype(int)
 
     # use private key system to transform the share key
-    PLWE_test = PLWE(m,n,q,std)
-    pk = PLWE_test.keyGen()
-    cipher = PLWE_test.enc(pk, alice_key)
+    MLWE_test = MLWE(m,n,q,std)
+    pk = MLWE_test.keyGen()
+    cipher = MLWE_test.enc(pk, alice_key)
 
     # DES package need 8 bytes key
     alice_share_key = createKey(alice_key)
     print("alice's share key in bytes:", alice_share_key)
 
     # ----- Bob -----
-    bob_key = PLWE_test.dec(cipher)
+    bob_key = MLWE_test.dec(cipher)
     bob_share_key = createKey(bob_key)
     print("Bob's share key in bytes:", bob_share_key)
     
